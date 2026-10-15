@@ -40,8 +40,11 @@ class SortOrder(str, Enum):
 
 
 class TaskCreate(CamelModel):
+    """`description` is Markdown."""
+
+
     title: str = Field(min_length=1, max_length=120)
-    description: str = Field(min_length=1, max_length=2000)
+    description: str = Field(min_length=1, max_length=10000)
     status: TaskStatus = TaskStatus.pending
     priority: TaskPriority = TaskPriority.medium
     due_date: Optional[date] = None
@@ -51,7 +54,7 @@ class TaskUpdate(CamelModel):
     """PUT body. Omitted fields keep their current value; `dueDate: null` clears it."""
 
     title: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    description: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+    description: Optional[str] = Field(default=None, min_length=1, max_length=10000)
     status: Optional[TaskStatus] = None
     priority: Optional[TaskPriority] = None
     due_date: Optional[date] = None

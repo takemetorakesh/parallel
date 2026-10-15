@@ -1,24 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getTask } from '../api/tasks'
 import { errorMessage } from '../api/client'
 import { formatDateTime, isOverdue, shortId } from '../lib/format'
 import type { Task, TaskInput } from '../types/task'
-import { CalendarIcon, PencilIcon, TrashIcon, XIcon } from './icons'
+import { CalendarIcon, TrashIcon, XIcon } from './icons'
 import { Modal } from './Modal'
+import { RichTextEditor } from './LazyRichTextEditor'
 import { PrioritySelect, StatusSelect } from './TaskProps'
 
 interface Props {
   /** The list's copy, shown immediately while the fresh copy loads. */
   initial: Task
   onClose: () => void
-  onEdit: (task: Task) => void
   onDelete: (task: Task) => void
   onPatch: (task: Task, patch: Partial<TaskInput>) => Promise<Task>
 }
 
-export function TaskDetailsDrawer({ initial, onClose, onEdit, onDelete, onPatch }: Props) {
+export function TaskDetailsDrawer({ initial, onClose, onDelete, onPatch }: Props) {
   const [task, setTask] = useState<Task>(initial)
   const [error, setError] = useState<string | null>(null)
+  const [titleDraft, setTitleDraft] = useState(initial.title)
+  const [fieldError, setFieldError] = useState<string | null>(null)
+
+  // Handlers read the latest task through a ref so debounced/unmount saves never use a stale copy.
+  const taskRef = useRef(task)
+  useEffect(() => {
+    taskRef.current = task
+  })
 
   useEffect(() => {
     const controller = new AbortController()
@@ -30,14 +38,56 @@ export function TaskDetailsDrawer({ initial, onClose, onEdit, onDelete, onPatch 
 
   /** Optimistic property change; rolls back if the API rejects it. */
   async function patch(p: Partial<TaskInput>) {
-    const before = task
-    setTask({ ...task, ...p })
+    const before = taskRef.current
+    setTask({ ...before, ...p })
     try {
-      setTask(await onPatch(task, p))
+      setTask(await onPatch(before, p))
     } catch {
       setTask(before)
     }
   }
+
+  // Description autosaves shortly after typing stops, and on blur/close, like Linear.
+  const pendingDescription = useRef<string | null>(null)
+  const descTimer = useRef<number | undefined>(undefined)
+
+  function flushDescription() {
+    window.clearTimeout(descTimer.current)
+    const md = pendingDescription.current
+    pendingDescription.current = null
+    if (md === null) return
+    if (!md.trim()) {
+      setFieldError("Description can't be empty")
+      return
+    }
+    setFieldError(null)
+    if (md.trim() !== taskRef.current.description.trim()) void patch({ description: md.trim() })
+  }
+
+  function queueDescription(md: string) {
+    pendingDescription.current = md
+    window.clearTimeout(descTimer.current)
+    descTimer.current = window.setTimeout(flushDescription, 700)
+  }
+
+  function commitTitle() {
+    const next = titleDraft.trim()
+    if (!next) {
+      setTitleDraft(taskRef.current.title)
+    } else if (next !== taskRef.current.title) {
+      void patch({ title: next })
+    }
+  }
+
+  // Save anything still pending when the panel closes.
+  const flushRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    flushRef.current = () => {
+      flushDescription()
+      commitTitle()
+    }
+  })
+  useEffect(() => () => flushRef.current(), [])
 
   const overdue = isOverdue(task.dueDate, task.status)
 
@@ -50,8 +100,26 @@ export function TaskDetailsDrawer({ initial, onClose, onEdit, onDelete, onPatch 
           </p>
         )}
 
-        <h3 className="text-xl font-semibold leading-snug">{task.title}</h3>
-        <p className="mt-3 whitespace-pre-wrap break-words text-muted">{task.description}</p>
+        <label htmlFor="drawer-title" className="sr-only">Title</label>
+        <input
+          id="drawer-title"
+          className="w-full rounded-md bg-transparent text-xl font-semibold leading-snug outline-none"
+          value={titleDraft}
+          maxLength={120}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onBlur={commitTitle}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+
+        <RichTextEditor
+          className="mt-3 min-h-[96px] cursor-text"
+          initialValue={initial.description}
+          onChange={queueDescription}
+          onBlur={flushDescription}
+          placeholder="Add description…"
+          ariaLabel="Description"
+        />
+        {fieldError && <p role="alert" className="mt-1 text-xs text-danger">{fieldError}</p>}
 
         <h4 className="mb-2 mt-8 text-xs font-medium text-subtle">Properties</h4>
         <dl className="space-y-1">
@@ -89,7 +157,6 @@ export function TaskDetailsDrawer({ initial, onClose, onEdit, onDelete, onPatch 
         </dl>
 
         <div className="mt-8 flex gap-2">
-          <button className="btn btn-secondary" onClick={() => onEdit(task)}><PencilIcon size={14} /> Edit</button>
           <button className="btn btn-ghost hover:text-danger" onClick={() => onDelete(task)}><TrashIcon size={14} /> Delete</button>
         </div>
       </div>

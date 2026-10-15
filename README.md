@@ -9,6 +9,7 @@ Tasks live in backend memory only (no database); data resets when the server res
 | ![Task details](docs/task-details-dark.jpg) | ![New task](docs/new-task-dark.jpg) |
 
 ## Features
+- Descriptions are Markdown with a live rich-text editor (Tiptap): type `# `, `- `, `1. `, `[] `, `> `, ``` or `**bold**` and it formats as you type. Stored as plain Markdown
 - Linear-inspired UI: sidebar, tasks grouped by status, dense rows, dark by default
 - Change status/priority/due date inline (row menus or the details panel); create, edit, delete (with confirmation)
 - Keyboard: `C` new task, `/` search, `Esc` close, `⌘/Ctrl+Enter` save
@@ -67,7 +68,7 @@ Base path `/api`. JSON uses camelCase. Interactive docs: `http://localhost:8000/
 | DELETE | `/api/tasks/{id}` | Delete a task | 200, 404 |
 | GET | `/health` | Liveness check | 200 |
 
-**Task:** `id`, `title` (1–120), `description` (1–2000), `status` (`pending` \| `in_progress` \| `completed`), `priority` (`low` \| `medium` \| `high`), `dueDate` (`YYYY-MM-DD` or null), `createdAt`, `updatedAt`.
+**Task:** `id`, `title` (1–120), `description` (1–10000, Markdown), `status` (`pending` \| `in_progress` \| `completed`), `priority` (`low` \| `medium` \| `high`), `dueDate` (`YYYY-MM-DD` or null), `createdAt`, `updatedAt`.
 `title` and `description` are required on create; `status` defaults to `pending`, `priority` to `medium`.
 
 **List query params:** `q`, `status`, `priority`, `sortBy` (`createdAt` \| `priority` \| `dueDate`, default `createdAt`), `order` (`asc` \| `desc`, default `desc`), `page` (≥1), `limit` (1–100, default 10). Tasks without a due date sort last.

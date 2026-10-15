@@ -102,7 +102,11 @@ class TaskService:
     def seed(self) -> None:
         today = date.today()
         samples = [
-            ("Complete assignment", "Build the full-stack task manager with React and FastAPI.",
+            ("Complete assignment", (
+                "## Goal\n\nBuild the full-stack task manager with **React** and **FastAPI**.\n\n"
+                "- [x] REST API with validation\n- [x] Responsive UI\n- [ ] README and Postman collection\n"
+                "- [ ] Demo video\n\n> Descriptions are Markdown: type `#`, `-` or `[]` followed by a space."
+            ),
              TaskStatus.in_progress, TaskPriority.high, today + timedelta(days=2)),
             ("Write API documentation", "Document every endpoint in the README and export a Postman collection.",
              TaskStatus.pending, TaskPriority.medium, today + timedelta(days=4)),

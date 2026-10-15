@@ -177,10 +177,6 @@ export default function Dashboard() {
         <TaskDetailsDrawer
           initial={viewing}
           onClose={() => setViewing(null)}
-          onEdit={(t) => {
-            setViewing(null)
-            setFormTarget(t)
-          }}
           onDelete={setDeleting}
           onPatch={patchTask}
         />

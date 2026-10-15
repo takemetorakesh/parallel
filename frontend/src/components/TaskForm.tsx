@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { ApiError, errorMessage } from '../api/client'
 import type { Task, TaskInput, TaskPriority, TaskStatus } from '../types/task'
 import { CalendarIcon } from './icons'
+import { RichTextEditor } from './LazyRichTextEditor'
 import { PrioritySelect, StatusSelect } from './TaskProps'
 
 const TITLE_MAX = 120
-const DESCRIPTION_MAX = 2000
+const DESCRIPTION_MAX = 10000
 
 type Field = 'title' | 'description' | 'dueDate'
 type Errors = Partial<Record<Field, string>>
@@ -47,6 +48,7 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   function set<K extends keyof Values>(key: K, value: Values[K]) {
     setValues((v) => ({ ...v, [key]: value }))
@@ -98,7 +100,7 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} onKeyDown={onKeyDown} noValidate>
+    <form ref={formRef} onSubmit={handleSubmit} onKeyDown={onKeyDown} noValidate>
       <div className="px-4 pb-4">
         {formError && (
           <p role="alert" className="mb-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger">
@@ -115,20 +117,22 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
           onChange={(e) => set('title', e.target.value)}
           aria-invalid={!!errors.title}
           aria-describedby={errors.title ? 'title-error' : undefined}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              formRef.current?.querySelector<HTMLElement>('.editor')?.focus()
+            }
+          }}
           autoFocus
         />
         {errors.title && <p id="title-error" className="mt-1 text-xs text-danger">{errors.title}</p>}
 
-        <label htmlFor="description" className="sr-only">Description</label>
-        <textarea
-          id="description"
-          rows={5}
-          className="mt-2 w-full resize-none bg-transparent outline-none placeholder:text-subtle"
-          placeholder="Add description…"
-          value={values.description}
-          onChange={(e) => set('description', e.target.value)}
-          aria-invalid={!!errors.description}
-          aria-describedby={errors.description ? 'description-error' : undefined}
+        <RichTextEditor
+          className="mt-3 min-h-[120px] cursor-text"
+          initialValue={values.description}
+          onChange={(md) => set('description', md)}
+          placeholder="Add description… (Markdown supported)"
+          ariaLabel="Description"
         />
         {errors.description && <p id="description-error" className="mt-1 text-xs text-danger">{errors.description}</p>}
 
