@@ -1,8 +1,9 @@
 import threading
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
+from app.services.seed_data import build_seed
 from app.schemas.task import (
     SortField,
     SortOrder,
@@ -100,26 +101,11 @@ class TaskService:
             return self._tasks.pop(task_id, None) is not None
 
     def seed(self) -> None:
-        today = date.today()
-        samples = [
-            ("Complete assignment", (
-                "## Goal\n\nBuild the full-stack task manager with **React** and **FastAPI**.\n\n"
-                "- [x] REST API with validation\n- [x] Responsive UI\n- [ ] README and Postman collection\n"
-                "- [ ] Demo video\n\n> Descriptions are Markdown: type `#`, `-` or `[]` followed by a space."
-            ),
-             TaskStatus.in_progress, TaskPriority.high, today + timedelta(days=2)),
-            ("Write API documentation", "Document every endpoint in the README and export a Postman collection.",
-             TaskStatus.pending, TaskPriority.medium, today + timedelta(days=4)),
-            ("Record demo video", "Short walkthrough of create, edit, filter and delete flows.",
-             TaskStatus.pending, TaskPriority.low, None),
-            ("Set up repository", "Initialise Git, add .gitignore and commit the project skeleton.",
-             TaskStatus.completed, TaskPriority.medium, today - timedelta(days=1)),
-        ]
-        for title, description, status, priority, due in samples:
-            self.create(TaskCreate(
-                title=title, description=description, status=status,
-                priority=priority, due_date=due,
-            ))
+        """Load the sample backlog, with realistic created/updated timestamps."""
+        for item in build_seed():
+            task = TaskOut(id=str(uuid.uuid4()), **item)
+            with self._lock:
+                self._tasks[task.id] = task
 
 
 task_service = TaskService()
