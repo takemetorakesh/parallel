@@ -25,6 +25,7 @@ function Svg({ size = 16, children, ...rest }: IconProps & { children: ReactNode
 export const PlusIcon = (p: IconProps) => <Svg {...p}><path d="M8 3v10M3 8h10" /></Svg>
 export const SearchIcon = (p: IconProps) => <Svg {...p}><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5 14 14" /></Svg>
 export const CalendarIcon = (p: IconProps) => <Svg {...p}><rect x="2" y="3" width="12" height="11" rx="2" /><path d="M2 7h12M5 1.5v3M11 1.5v3" /></Svg>
+export const CalendarXIcon = (p: IconProps) => <Svg {...p}><rect x="2" y="3" width="12" height="11" rx="2" /><path d="M2 7h12M5 1.5v3M11 1.5v3M6.5 9.5l3 3M9.5 9.5l-3 3" /></Svg>
 export const PencilIcon = (p: IconProps) => <Svg {...p}><path d="m10.5 2.5 3 3L5 14H2v-3z" /></Svg>
 export const TrashIcon = (p: IconProps) => <Svg {...p}><path d="M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.5 8.5h6l.5-8.5" /></Svg>
 export const MenuIcon = (p: IconProps) => <Svg {...p}><path d="M2 4h12M2 8h12M2 12h12" /></Svg>

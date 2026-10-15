@@ -4,7 +4,7 @@ import { request } from './client'
 export function listTasks(query: TaskQuery, signal?: AbortSignal): Promise<TaskList> {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
-    if (value !== '' && value !== undefined) params.set(key, String(value))
+    if (value !== '' && value !== undefined && value !== false) params.set(key, String(value))
   }
   return request<TaskList>(`/api/tasks?${params}`, { signal })
 }

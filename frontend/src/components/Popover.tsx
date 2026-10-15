@@ -48,7 +48,7 @@ export function Popover({ ariaLabel, button, buttonClassName = 'chip', align = '
     document.addEventListener('keydown', onKey, true)
     window.addEventListener('resize', close)
     window.addEventListener('scroll', onScroll, true)
-    menuRef.current?.querySelector<HTMLElement>('button')?.focus()
+    ;(menuRef.current?.querySelector<HTMLElement>('[data-autofocus]') ?? menuRef.current?.querySelector<HTMLElement>('button'))?.focus()
     return () => {
       document.removeEventListener('mousedown', onDown)
       document.removeEventListener('keydown', onKey, true)
@@ -59,6 +59,8 @@ export function Popover({ ariaLabel, button, buttonClassName = 'chip', align = '
 
   function onMenuKey(e: KeyboardEvent) {
     if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+    // Arrow keys edit the segments of a native date input.
+    if (e.target instanceof HTMLInputElement && e.target.type === 'date') return
     e.preventDefault()
     const items = [...(menuRef.current?.querySelectorAll<HTMLElement>('button') ?? [])]
     const i = items.indexOf(document.activeElement as HTMLElement)

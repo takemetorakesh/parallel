@@ -43,6 +43,8 @@ export interface TaskQuery {
   q: string
   status: TaskStatus | ''
   priority: TaskPriority | ''
+  /** Past due and not completed. */
+  overdue: boolean
   sortBy: SortBy
   order: SortOrder
   page: number

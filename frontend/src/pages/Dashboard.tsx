@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { errorMessage } from '../api/client'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { FilterBar } from '../components/FilterBar'
-import { MenuIcon, PlusIcon, SearchIcon } from '../components/icons'
+import { CalendarXIcon, MenuIcon, PlusIcon, SearchIcon } from '../components/icons'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
 import { Sidebar } from '../components/Sidebar'
@@ -20,7 +20,7 @@ import type { Task, TaskInput } from '../types/task'
 type FormTarget = Task | 'new' | null
 
 export default function Dashboard() {
-  const { query, updateQuery, data, loading, error, reload, create, update, remove } = useTasks()
+  const { query, updateQuery, overdueCount, data, loading, error, reload, create, update, remove } = useTasks()
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -42,11 +42,11 @@ export default function Dashboard() {
   )
   useHotkeys(hotkeys)
 
-  const hasFilters = !!(query.q || query.status || query.priority)
+  const hasFilters = !!(query.q || query.status || query.priority || query.overdue)
 
   function clearFilters() {
     setSearch('')
-    updateQuery({ q: '', status: '', priority: '', sortBy: DEFAULT_QUERY.sortBy, order: DEFAULT_QUERY.order })
+    updateQuery({ q: '', status: '', priority: '', overdue: false, sortBy: DEFAULT_QUERY.sortBy, order: DEFAULT_QUERY.order })
   }
 
   async function handleSubmit(input: TaskInput) {
@@ -86,13 +86,15 @@ export default function Dashboard() {
   const tasks = data?.data ?? []
   const showSkeleton = loading && !data
   const showError = !!error && tasks.length === 0
-  const title = query.status ? STATUS_LABEL[query.status] : 'All tasks'
+  const title = query.overdue ? 'Overdue' : query.status ? STATUS_LABEL[query.status] : 'All tasks'
 
   return (
     <div className="flex h-dvh overflow-hidden">
       <Sidebar
         query={query}
-        onStatus={(status) => updateQuery({ status })}
+        overdueCount={overdueCount}
+        onStatus={(status) => updateQuery({ status, overdue: false })}
+        onOverdue={() => updateQuery({ overdue: true, status: '' })}
         onNewTask={() => setFormTarget('new')}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -107,6 +109,14 @@ export default function Dashboard() {
             {title}
             <span className="font-normal text-muted" aria-live="polite">{data ? data.meta.total : ''}</span>
           </h1>
+          {overdueCount > 0 && !query.overdue && (
+            <button
+              className="hidden h-6 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-danger/10 px-2 text-xs font-medium text-danger transition-colors hover:bg-danger/20 sm:inline-flex"
+              onClick={() => updateQuery({ overdue: true, status: '' })}
+            >
+              <CalendarXIcon size={12} /> {overdueCount} overdue
+            </button>
+          )}
 
           <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
             <div className="relative min-w-0 flex-1 sm:flex-none">

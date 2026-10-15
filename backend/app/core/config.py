@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List
+from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     api_prefix: str = "/api"
     # Comma-separated list of allowed browser origins.
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    # Postgres connection string. Leave unset to keep tasks in memory (the default).
+    database_url: Optional[str] = None
     # Populate a few sample tasks on startup so the UI isn't empty in demos.
     seed_data: bool = True
 

@@ -3,7 +3,8 @@ import { getTask } from '../api/tasks'
 import { errorMessage } from '../api/client'
 import { formatDateTime, isOverdue, shortId } from '../lib/format'
 import type { Task, TaskInput } from '../types/task'
-import { CalendarIcon, TrashIcon, XIcon } from './icons'
+import { TrashIcon } from './icons'
+import { DueDatePicker } from './DueDatePicker'
 import { Modal } from './Modal'
 import { RichTextEditor } from './LazyRichTextEditor'
 import { PrioritySelect, StatusSelect } from './TaskProps'
@@ -130,22 +131,7 @@ export function TaskDetailsDrawer({ initial, onClose, onDelete, onPatch }: Props
             <PrioritySelect variant="full" value={task.priority} onChange={(priority) => patch({ priority })} />
           </Row>
           <Row label="Due date">
-            <label className={`prop-btn ${overdue ? 'text-danger' : ''}`}>
-              <CalendarIcon size={14} />
-              <input
-                type="date"
-                aria-label="Due date"
-                className="bg-transparent outline-none"
-                value={task.dueDate ?? ''}
-                onChange={(e) => patch({ dueDate: e.target.value || null })}
-              />
-            </label>
-            {task.dueDate && (
-              <button className="icon-btn" aria-label="Clear due date" onClick={() => patch({ dueDate: null })}>
-                <XIcon size={12} />
-              </button>
-            )}
-            {overdue && <span className="text-xs text-danger">Overdue</span>}
+            <DueDatePicker variant="prop" value={task.dueDate} overdue={overdue} onChange={(dueDate) => patch({ dueDate })} />
           </Row>
         </dl>
 

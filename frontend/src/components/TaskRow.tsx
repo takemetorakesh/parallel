@@ -1,6 +1,6 @@
 import { formatShortDate, isOverdue, shortId } from '../lib/format'
 import type { Task, TaskInput } from '../types/task'
-import { CalendarIcon, PencilIcon, TrashIcon } from './icons'
+import { CalendarIcon, CalendarXIcon, PencilIcon, TrashIcon } from './icons'
 import { PrioritySelect, StatusSelect } from './TaskProps'
 
 interface Props {
@@ -32,11 +32,11 @@ export function TaskRow({ task, onOpen, onEdit, onDelete, onPatch }: Props) {
       {task.dueDate && (
         <span
           className={`hidden shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs sm:inline-flex ${
-            overdue ? 'border-danger/40 text-danger' : 'border-line-strong text-muted'
+            overdue ? 'border-danger/40 bg-danger/10 font-medium text-danger' : 'border-line-strong text-muted'
           }`}
           title={overdue ? 'Overdue' : 'Due date'}
         >
-          <CalendarIcon size={12} />
+          {overdue ? <CalendarXIcon size={12} /> : <CalendarIcon size={12} />}
           {formatShortDate(task.dueDate, true)}
         </span>
       )}

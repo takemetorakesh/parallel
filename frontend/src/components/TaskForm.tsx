@@ -2,7 +2,8 @@ import { useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { ApiError, errorMessage } from '../api/client'
 import type { Task, TaskInput, TaskPriority, TaskStatus } from '../types/task'
-import { CalendarIcon } from './icons'
+import { isOverdue } from '../lib/format'
+import { DueDatePicker } from './DueDatePicker'
 import { RichTextEditor } from './LazyRichTextEditor'
 import { PrioritySelect, StatusSelect } from './TaskProps'
 
@@ -139,19 +140,11 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <StatusSelect variant="chip" value={values.status} onChange={(v) => set('status', v)} />
           <PrioritySelect variant="chip" value={values.priority} onChange={(v) => set('priority', v)} />
-          <label className={`chip ${values.dueDate ? 'text-fg' : ''}`}>
-            <CalendarIcon size={13} />
-            <span className="sr-only">Due date</span>
-            <input
-              id="dueDate"
-              type="date"
-              className="w-[112px] bg-transparent text-xs outline-none"
-              value={values.dueDate}
-              onChange={(e) => set('dueDate', e.target.value)}
-              aria-label="Due date"
-              aria-invalid={!!errors.dueDate}
-            />
-          </label>
+          <DueDatePicker
+            value={values.dueDate || null}
+            overdue={isOverdue(values.dueDate || null, values.status)}
+            onChange={(v) => set('dueDate', v ?? '')}
+          />
         </div>
         {errors.dueDate && <p className="mt-1 text-xs text-danger">{errors.dueDate}</p>}
       </div>

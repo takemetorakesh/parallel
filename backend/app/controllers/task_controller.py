@@ -27,12 +27,13 @@ class TaskController:
         q: Optional[str],
         status: Optional[TaskStatus],
         priority: Optional[TaskPriority],
+        overdue: Optional[bool],
         sort_by: SortField,
         order: SortOrder,
         page: int,
         limit: int,
     ) -> TaskListOut:
-        items, total = self.service.list(q, status, priority, sort_by, order, page, limit)
+        items, total = self.service.list(q, status, priority, overdue, sort_by, order, page, limit)
         pages = max(1, -(-total // limit))
         return TaskListOut(
             data=items,

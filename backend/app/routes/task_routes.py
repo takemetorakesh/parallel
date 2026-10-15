@@ -23,12 +23,13 @@ def list_tasks(
     q: Optional[str] = Query(None, description="Search title and description"),
     status: Optional[TaskStatus] = None,
     priority: Optional[TaskPriority] = None,
+    overdue: Optional[bool] = Query(None, description="Only tasks past their due date that aren't completed"),
     sort_by: SortField = Query(SortField.created_at, alias="sortBy"),
     order: SortOrder = SortOrder.desc,
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=100),
 ):
-    return ctrl.list_tasks(q, status, priority, sort_by, order, page, limit)
+    return ctrl.list_tasks(q, status, priority, overdue, sort_by, order, page, limit)
 
 
 @router.get("/{task_id}", response_model=TaskOut, summary="Get a task")

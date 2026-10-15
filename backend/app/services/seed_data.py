@@ -77,7 +77,7 @@ Access tokens currently live for 24h and can't be revoked. Move to **short-lived
     ),
     (
         "Set up CI pipeline with GitHub Actions",
-        P, HIGH, 2, 20,
+        P, HIGH, -2, 20,
         """## Goal
 
 Every pull request runs lint, type-check, tests and a build before it can merge.
@@ -103,7 +103,7 @@ on:
     ),
     (
         "Write integration tests for the payments flow",
-        P, HIGH, 5, 40,
+        P, HIGH, -1, 40,
         """The checkout flow has no automated coverage and broke twice last month.
 
 ## Cases to cover

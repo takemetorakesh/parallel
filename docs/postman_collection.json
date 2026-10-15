@@ -92,6 +92,30 @@
       }
     },
     {
+      "name": "List overdue tasks",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tasks?overdue=true",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tasks"
+          ],
+          "query": [
+            {
+              "key": "overdue",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Past their due date and not completed"
+      }
+    },
+    {
       "name": "Create task",
       "request": {
         "method": "POST",

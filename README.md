@@ -1,7 +1,7 @@
 # Task Management System
 
 Full-stack task manager: **React + TypeScript (Vite, Tailwind)** frontend and **FastAPI** backend.
-Tasks live in backend memory only (no database); data resets when the server restarts.
+Tasks live in **backend memory by default** (as the assignment requires; data resets on restart). Set `DATABASE_URL` and the same API stores them in **PostgreSQL** instead. The Docker setup does exactly that.
 
 | | |
 |---|---|
@@ -13,6 +13,8 @@ Tasks live in backend memory only (no database); data resets when the server res
 - Linear-inspired UI: sidebar, tasks grouped by status, dense rows, dark by default
 - Change status/priority/due date inline (row menus or the details panel); create, edit, delete (with confirmation)
 - Keyboard: `C` new task, `/` search, `Esc` close, `⌘/Ctrl+Enter` save
+- **Overdue tracking:** overdue tasks show in red (row chip, details panel, sidebar badge with count, header pill) and have their own Overdue view/filter. A task is overdue when its due date has passed and it isn't completed
+- Linear-style due date picker: type `24h`, `7 days`, `2w`, `Feb 9`, `tomorrow` or pick Today / Tomorrow / In one week / Custom
 - Loading skeleton, empty state (with/without filters), error state with retry, toasts
 - Client-side form validation, plus server errors mapped back onto form fields
 - **Bonus:** debounced search, status/priority filters, sorting (created / priority / due date), pagination, dark mode (follows system, persisted), Swagger docs, Postman collection
@@ -23,11 +25,19 @@ Python 3.10+ and Node 20+.
 
 ## Run it
 
+**Everything in Docker (with PostgreSQL)**
+```bash
+docker compose up --build
+```
+App on http://localhost:8080 (nginx serves the React build and proxies `/api`), API on http://localhost:8000/docs, Postgres 16 with a persistent volume. `docker compose down -v` wipes the data.
+
+**Local dev (in-memory, no database needed)**
+
 **Backend** (http://localhost:8000, Swagger UI at `/docs`)
 ```bash
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env        # optional
 uvicorn app.main:app --reload --port 8000
 ```
@@ -43,14 +53,16 @@ In dev, Vite proxies `/api` to the backend, so no CORS setup is needed. For a pr
 
 **Tests**
 ```bash
-cd backend && pytest
+cd backend && pytest                       # memory + SQLite
+TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/tasks_test pytest   # also runs against Postgres
 cd frontend && npm run build   # type-checks and builds
 ```
 
 ## Environment variables
 | File | Variable | Default | Purpose |
 |---|---|---|---|
-| `backend/.env` | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
+| `backend/.env` | `DATABASE_URL` | *(empty)* | `postgresql://user:pass@host:5432/db`. Empty = in-memory. Tables are created automatically; sample tasks are seeded only into an empty table |
+| | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
 | | `SEED_DATA` | `true` | Seed sample tasks on startup |
 | | `API_PREFIX` | `/api` | URL prefix for the API routes |
 | `frontend/.env` | `VITE_API_URL` | *(empty)* | Backend origin; empty = use the dev proxy |
@@ -61,7 +73,7 @@ Base path `/api`. JSON uses camelCase. Interactive docs: `http://localhost:8000/
 
 | Method | Endpoint | Purpose | Status |
 |---|---|---|---|
-| GET | `/api/tasks` | List tasks (search, filter, sort, paginate) | 200, 400 |
+| GET | `/api/tasks` | List tasks (search, filter, overdue, sort, paginate) | 200, 400 |
 | GET | `/api/tasks/{id}` | Get one task | 200, 404 |
 | POST | `/api/tasks` | Create a task | 201, 400 |
 | PUT | `/api/tasks/{id}` | Update a task (omitted fields unchanged; `dueDate: null` clears it) | 200, 400, 404 |
@@ -71,7 +83,7 @@ Base path `/api`. JSON uses camelCase. Interactive docs: `http://localhost:8000/
 **Task:** `id`, `title` (1–120), `description` (1–10000, Markdown), `status` (`pending` \| `in_progress` \| `completed`), `priority` (`low` \| `medium` \| `high`), `dueDate` (`YYYY-MM-DD` or null), `createdAt`, `updatedAt`.
 `title` and `description` are required on create; `status` defaults to `pending`, `priority` to `medium`.
 
-**List query params:** `q`, `status`, `priority`, `sortBy` (`createdAt` \| `priority` \| `dueDate`, default `createdAt`), `order` (`asc` \| `desc`, default `desc`), `page` (≥1), `limit` (1–100, default 10). Tasks without a due date sort last.
+**List query params:** `q`, `status`, `priority`, `overdue` (`true` = past due and not completed), `sortBy` (`createdAt` \| `priority` \| `dueDate`, default `createdAt`), `order` (`asc` \| `desc`, default `desc`), `page` (≥1), `limit` (1–100, default 10). Tasks without a due date sort last.
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks -H 'Content-Type: application/json' -d '{
@@ -95,6 +107,13 @@ Errors share one shape. Validation failures return **400** (not FastAPI's defaul
 ```
 Codes: `validation_error` (400), `not_found` (404), `internal_error` (500).
 
+## Deploy
+
+Vercel hosts the frontend; it can't run the Docker image or keep in-memory state across serverless calls, so the API runs as a container elsewhere (any Docker host) with Postgres.
+
+1. **API + database** (Render, Railway, Fly, a VPS...): deploy `backend/Dockerfile` and set `DATABASE_URL` and `CORS_ORIGINS=https://<your-app>.vercel.app`. The container listens on `$PORT` (default 8000) and exposes `/health`. [`render.yaml`](render.yaml) is a Render blueprint for the API + a Postgres database (not verified on a live account).
+2. **Frontend on Vercel**: import the repo, set **Root Directory** to `frontend`, and add the env var `VITE_API_URL=https://<your-api-host>`. [`frontend/vercel.json`](frontend/vercel.json) handles the SPA rewrite.
+
 ## Structure
 ```
 backend/app
@@ -102,7 +121,8 @@ backend/app
 ├── core/config.py           env-based settings
 ├── routes/task_routes.py    HTTP routing only
 ├── controllers/             404 mapping, response shaping
-├── services/task_service.py in-memory store + search/filter/sort/paginate
+├── services/                task_service.py (business rules), seed_data.py
+├── repositories/            memory.py (default) and sql.py (Postgres) behind one interface
 ├── schemas/task.py          Pydantic models (camelCase aliases)
 └── middleware/error_handler.py  centralized error handling
 frontend/src

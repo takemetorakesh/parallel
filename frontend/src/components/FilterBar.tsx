@@ -1,6 +1,6 @@
 import { PRIORITY_LABEL, STATUS_LABEL } from '../types/task'
 import type { SortBy, SortOrder, TaskPriority, TaskQuery, TaskStatus } from '../types/task'
-import { ChevronDownIcon, SortIcon, XIcon } from './icons'
+import { CalendarXIcon, ChevronDownIcon, SortIcon, XIcon } from './icons'
 import { SelectMenu } from './SelectMenu'
 import type { Option } from './SelectMenu'
 import { PRIORITY_OPTIONS, STATUS_OPTIONS } from './TaskProps'
@@ -45,6 +45,13 @@ export function FilterBar({ query, onChange, onClear, hasFilters }: Props) {
         buttonClassName={`chip ${query.priority ? 'chip-active' : ''}`}
         button={<>{query.priority ? `Priority: ${PRIORITY_LABEL[query.priority]}` : 'Priority'}<ChevronDownIcon size={12} /></>}
       />
+      <button
+        className={`chip ${query.overdue ? 'border-danger/50 bg-danger/10 !text-danger' : ''}`}
+        aria-pressed={query.overdue}
+        onClick={() => onChange({ overdue: !query.overdue })}
+      >
+        <CalendarXIcon size={13} /> Overdue
+      </button>
       {hasFilters && (
         <button className="btn btn-ghost h-7 px-2 text-xs" onClick={onClear}>
           <XIcon size={12} /> Clear

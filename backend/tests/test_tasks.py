@@ -2,16 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services.task_service import task_service
 
 client = TestClient(app)  # no `with`: lifespan (seeding) is not run
-
-
-@pytest.fixture(autouse=True)
-def clean_store():
-    task_service.reset()
-    yield
-    task_service.reset()
 
 
 def make(**overrides):
@@ -142,3 +134,24 @@ def test_list_invalid_query_is_400():
 def test_cors_header_for_allowed_origin():
     res = client.get("/api/tasks", headers={"Origin": "http://localhost:5173"})
     assert res.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_overdue_filter_and_not_for_completed_or_undated():
+    from datetime import date, timedelta
+
+    past = (date.today() - timedelta(days=2)).isoformat()
+    future = (date.today() + timedelta(days=2)).isoformat()
+    make(title="Late", dueDate=past, status="pending")
+    make(title="Late but started", dueDate=past, status="in_progress")
+    make(title="Late but done", dueDate=past, status="completed")
+    make(title="On time", dueDate=future)
+    make(title="No date", dueDate=None)
+
+    res = client.get("/api/tasks?overdue=true")
+    assert sorted(t["title"] for t in res.json()["data"]) == ["Late", "Late but started"]
+    assert res.json()["meta"]["total"] == 2
+    # overdue=false / absent means no filtering
+    assert client.get("/api/tasks?overdue=false").json()["meta"]["total"] == 5
+    # combines with other filters
+    res = client.get("/api/tasks?overdue=true&status=in_progress")
+    assert [t["title"] for t in res.json()["data"]] == ["Late but started"]

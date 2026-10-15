@@ -2,11 +2,13 @@ import type { ReactNode } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { STATUSES, STATUS_LABEL } from '../types/task'
 import type { TaskQuery, TaskStatus } from '../types/task'
-import { ListIcon, MoonIcon, PlusIcon, StatusIcon, SunIcon } from './icons'
+import { CalendarXIcon, ListIcon, MoonIcon, PlusIcon, StatusIcon, SunIcon } from './icons'
 
 interface Props {
   query: TaskQuery
+  overdueCount: number
   onStatus: (status: TaskStatus | '') => void
+  onOverdue: () => void
   onNewTask: () => void
   open: boolean
   onClose: () => void
@@ -26,7 +28,7 @@ function NavItem({ active, onClick, children }: { active: boolean; onClick: () =
   )
 }
 
-export function Sidebar({ query, onStatus, onNewTask, open, onClose }: Props) {
+export function Sidebar({ query, overdueCount, onStatus, onOverdue, onNewTask, open, onClose }: Props) {
   const { theme, toggle } = useTheme()
   const select = (s: TaskStatus | '') => {
     onStatus(s)
@@ -53,15 +55,23 @@ export function Sidebar({ query, onStatus, onNewTask, open, onClose }: Props) {
         </div>
 
         <nav className="mt-4 space-y-0.5" aria-label="Views">
-          <NavItem active={!query.status} onClick={() => select('')}>
+          <NavItem active={!query.status && !query.overdue} onClick={() => select('')}>
             <ListIcon size={14} className="shrink-0" /> All tasks
+          </NavItem>
+          <NavItem active={query.overdue} onClick={() => { onOverdue(); onClose() }}>
+            <CalendarXIcon size={14} className="shrink-0 text-danger" /> Overdue
+            {overdueCount > 0 && (
+              <span className="ml-auto rounded-full bg-danger/15 px-1.5 text-xs font-medium text-danger" aria-label={`${overdueCount} overdue`}>
+                {overdueCount}
+              </span>
+            )}
           </NavItem>
         </nav>
 
         <h2 className="mt-5 px-2 pb-1 text-xs font-medium text-subtle">Status</h2>
         <nav className="space-y-0.5" aria-label="Status views">
           {STATUSES.map((s) => (
-            <NavItem key={s} active={query.status === s} onClick={() => select(s)}>
+            <NavItem key={s} active={query.status === s && !query.overdue} onClick={() => select(s)}>
               <StatusIcon status={s} /> {STATUS_LABEL[s]}
             </NavItem>
           ))}

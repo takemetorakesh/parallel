@@ -7,6 +7,7 @@ export const DEFAULT_QUERY: TaskQuery = {
   q: '',
   status: '',
   priority: '',
+  overdue: false,
   sortBy: 'createdAt',
   order: 'desc',
   page: 1,
@@ -19,6 +20,7 @@ export function useTasks() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [overdueCount, setOverdueCount] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -42,6 +44,16 @@ export function useTasks() {
       })
     return () => controller.abort()
   }, [query, reloadKey])
+
+  // Sidebar badge: how many tasks are overdue, independent of the current filters. Refreshes after every mutation.
+  useEffect(() => {
+    const controller = new AbortController()
+    api
+      .listTasks({ ...DEFAULT_QUERY, overdue: true, limit: 1 }, controller.signal)
+      .then((res) => setOverdueCount(res.meta.total))
+      .catch(() => {})
+    return () => controller.abort()
+  }, [reloadKey])
 
   /** Change filters/sort/search. Resets to page 1 unless a page is given. Ignores no-op patches. */
   const updateQuery = useCallback((patch: Partial<TaskQuery>) => {
@@ -79,5 +91,5 @@ export function useTasks() {
     [reload],
   )
 
-  return { query, updateQuery, data, loading, error, reload, create, update, remove }
+  return { query, updateQuery, overdueCount, data, loading, error, reload, create, update, remove }
 }
