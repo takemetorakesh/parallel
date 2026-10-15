@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useTheme } from '../hooks/useTheme'
 import { STATUSES, STATUS_LABEL } from '../types/task'
 import type { TaskQuery, TaskStatus } from '../types/task'
+import { Logo } from './Logo'
 import { CalendarXIcon, ListIcon, MoonIcon, PlusIcon, StatusIcon, SunIcon } from './icons'
 
 interface Props {
@@ -45,9 +46,7 @@ export function Sidebar({ query, overdueCount, onStatus, onOverdue, onNewTask, o
         aria-label="Sidebar"
       >
         <div className="flex h-7 items-center gap-2 px-2">
-          <span className="flex size-5 items-center justify-center rounded-md bg-accent text-[11px] font-semibold text-accent-fg" aria-hidden="true">
-            P
-          </span>
+          <Logo />
           <span className="flex-1 truncate font-medium">Parallel</span>
           <button className="icon-btn" onClick={() => { onNewTask(); onClose() }} aria-label="New task" title="New task (C)">
             <PlusIcon size={15} />

@@ -1,4 +1,4 @@
-# Parallel
+# <img src="frontend/public/favicon.svg" width="28" align="center" alt="" /> Parallel
 
 Full-stack task manager: **React + TypeScript (Vite, Tailwind)** frontend and **FastAPI** backend.
 Tasks live in **backend memory by default** (as the assignment requires; data resets on restart). Set `DATABASE_URL` and the same API stores them in **PostgreSQL** instead. The Docker setup does exactly that.
