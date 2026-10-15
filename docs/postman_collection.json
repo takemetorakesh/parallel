@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Task Management API",
+    "name": "Parallel API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": "Run 'Create task' first; it stores the new id in {{taskId}} for the other requests."
   },

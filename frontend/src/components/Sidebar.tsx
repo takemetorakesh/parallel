@@ -46,9 +46,9 @@ export function Sidebar({ query, overdueCount, onStatus, onOverdue, onNewTask, o
       >
         <div className="flex h-7 items-center gap-2 px-2">
           <span className="flex size-5 items-center justify-center rounded-md bg-accent text-[11px] font-semibold text-accent-fg" aria-hidden="true">
-            T
+            P
           </span>
-          <span className="flex-1 truncate font-medium">Task Manager</span>
+          <span className="flex-1 truncate font-medium">Parallel</span>
           <button className="icon-btn" onClick={() => { onNewTask(); onClose() }} aria-label="New task" title="New task (C)">
             <PlusIcon size={15} />
           </button>

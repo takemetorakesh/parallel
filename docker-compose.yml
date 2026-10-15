@@ -1,3 +1,4 @@
+name: parallel
 # Whole stack with PostgreSQL:  docker compose up --build
 #   web  -> http://localhost:8080   (React build served by nginx, proxies /api to the API)
 #   api  -> http://localhost:8000   (FastAPI; Swagger at /docs)
