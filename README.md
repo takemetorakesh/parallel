@@ -46,9 +46,9 @@ cd frontend && npm run build   # type-checks and builds
 ## Environment variables
 | File | Variable | Default | Purpose |
 |---|---|---|---|
-| `backend/.env` | `HOST`, `PORT` | `0.0.0.0`, `8000` | Server bind (used when running via `python -m uvicorn` flags/env) |
-| | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
+| `backend/.env` | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins |
 | | `SEED_DATA` | `true` | Seed sample tasks on startup |
+| | `API_PREFIX` | `/api` | URL prefix for the API routes |
 | `frontend/.env` | `VITE_API_URL` | *(empty)* | Backend origin; empty = use the dev proxy |
 | | `VITE_PROXY_TARGET` | `http://localhost:8000` | Dev proxy target |
 

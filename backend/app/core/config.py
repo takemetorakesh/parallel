@@ -7,8 +7,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Task Management API"
     api_prefix: str = "/api"
-    host: str = "0.0.0.0"
-    port: int = 8000
     # Comma-separated list of allowed browser origins.
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     # Populate a few sample tasks on startup so the UI isn't empty in demos.
