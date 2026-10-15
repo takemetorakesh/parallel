@@ -10,7 +10,7 @@ export const DEFAULT_QUERY: TaskQuery = {
   sortBy: 'createdAt',
   order: 'desc',
   page: 1,
-  limit: 9,
+  limit: 20,
 }
 
 export function useTasks() {
@@ -63,7 +63,7 @@ export function useTasks() {
   )
 
   const update = useCallback(
-    async (id: string, input: TaskInput) => {
+    async (id: string, input: Partial<TaskInput>) => {
       const task = await api.updateTask(id, input)
       reload()
       return task

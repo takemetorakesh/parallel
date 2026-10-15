@@ -1,17 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { errorMessage } from '../api/client'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { FilterBar } from '../components/FilterBar'
+import { MenuIcon, PlusIcon, SearchIcon } from '../components/icons'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
+import { Sidebar } from '../components/Sidebar'
 import { EmptyState, ErrorState, LoadingState } from '../components/States'
 import { TaskDetailsDrawer } from '../components/TaskDetailsDrawer'
 import { TaskForm } from '../components/TaskForm'
 import { TaskList } from '../components/TaskList'
-import { ThemeToggle } from '../components/ThemeToggle'
 import { useToast } from '../components/Toast'
-import { Toolbar } from '../components/Toolbar'
 import { useDebounce } from '../hooks/useDebounce'
+import { useHotkeys } from '../hooks/useHotkeys'
 import { DEFAULT_QUERY, useTasks } from '../hooks/useTasks'
+import { STATUS_LABEL } from '../types/task'
 import type { Task, TaskInput } from '../types/task'
 
 type FormTarget = Task | 'new' | null
@@ -27,6 +30,17 @@ export default function Dashboard() {
   const [formTarget, setFormTarget] = useState<FormTarget>(null)
   const [viewing, setViewing] = useState<Task | null>(null)
   const [deleting, setDeleting] = useState<Task | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  const hotkeys = useMemo(
+    () => ({
+      c: () => setFormTarget('new'),
+      '/': () => searchRef.current?.focus(),
+    }),
+    [],
+  )
+  useHotkeys(hotkeys)
 
   const hasFilters = !!(query.q || query.status || query.priority)
 
@@ -46,6 +60,16 @@ export default function Dashboard() {
     setFormTarget(null)
   }
 
+  /** Quick property change (status, priority, due date) from a row or the details panel. */
+  async function patchTask(task: Task, patch: Partial<TaskInput>): Promise<Task> {
+    try {
+      return await update(task.id, patch)
+    } catch (err) {
+      toast('error', errorMessage(err))
+      throw err
+    }
+  }
+
   async function handleDelete() {
     if (!deleting) return
     try {
@@ -62,50 +86,85 @@ export default function Dashboard() {
   const tasks = data?.data ?? []
   const showSkeleton = loading && !data
   const showError = !!error && tasks.length === 0
+  const title = query.status ? STATUS_LABEL[query.status] : 'All tasks'
 
   return (
-    <div className="mx-auto min-h-screen max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-sm text-muted" aria-live="polite">
-            {data ? `${data.meta.total} ${data.meta.total === 1 ? 'task' : 'tasks'}${hasFilters ? ' found' : ''}` : ' '}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button className="btn btn-primary" onClick={() => setFormTarget('new')}>
-            <span aria-hidden="true">+</span> New task
-          </button>
-        </div>
-      </header>
+    <div className="flex h-dvh overflow-hidden">
+      <Sidebar
+        query={query}
+        onStatus={(status) => updateQuery({ status })}
+        onNewTask={() => setFormTarget('new')}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      <div className="mt-6">
-        <Toolbar search={search} onSearch={setSearch} query={query} onChange={updateQuery} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-4 md:px-6">
+          <button className="icon-btn md:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
+            <MenuIcon size={16} />
+          </button>
+          <h1 className="flex shrink-0 items-center gap-2 whitespace-nowrap font-medium">
+            {title}
+            <span className="font-normal text-muted" aria-live="polite">{data ? data.meta.total : ''}</span>
+          </h1>
+
+          <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2">
+            <div className="relative min-w-0 flex-1 sm:flex-none">
+              <SearchIcon size={14} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-subtle" />
+              <label htmlFor="search" className="sr-only">Search tasks</label>
+              <input
+                id="search"
+                ref={searchRef}
+                type="search"
+                placeholder="Search…"
+                className="h-7 w-full rounded-md border border-line-strong bg-transparent pl-7 pr-7 text-[13px] outline-none placeholder:text-subtle focus:border-accent sm:w-56 [&::-webkit-search-cancel-button]:hidden"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Escape' && (setSearch(''), e.currentTarget.blur())}
+              />
+              {!search && <span className="kbd pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 sm:inline-flex">/</span>}
+            </div>
+            <button className="btn btn-primary shrink-0" onClick={() => setFormTarget('new')} aria-label="New task">
+              <PlusIcon size={14} />
+              <span className="hidden sm:inline">New task</span>
+              <span className="kbd hidden border-white/30 text-white/70 sm:inline-flex">C</span>
+            </button>
+          </div>
+        </header>
+
+        <FilterBar query={query} onChange={updateQuery} onClear={clearFilters} hasFilters={hasFilters} />
+
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          {showSkeleton ? (
+            <LoadingState />
+          ) : showError ? (
+            <ErrorState message={error} onRetry={reload} />
+          ) : tasks.length === 0 ? (
+            <EmptyState filtered={hasFilters} onCreate={() => setFormTarget('new')} onClear={clearFilters} />
+          ) : (
+            <>
+              {error && (
+                <p role="alert" className="border-b border-line bg-danger/10 px-5 py-2 text-danger">
+                  {error} <button className="underline" onClick={reload}>Retry</button>
+                </p>
+              )}
+              <TaskList
+                tasks={tasks}
+                busy={loading}
+                onOpen={setViewing}
+                onEdit={setFormTarget}
+                onDelete={setDeleting}
+                onPatch={patchTask}
+              />
+            </>
+          )}
+        </main>
+
+        {data && <Pagination meta={data.meta} onPage={(page) => updateQuery({ page })} />}
       </div>
 
-      <main className="mt-6">
-        {showSkeleton ? (
-          <LoadingState />
-        ) : showError ? (
-          <ErrorState message={error} onRetry={reload} />
-        ) : tasks.length === 0 ? (
-          <EmptyState filtered={hasFilters} onCreate={() => setFormTarget('new')} onClear={clearFilters} />
-        ) : (
-          <>
-            {error && (
-              <p role="alert" className="mb-4 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-                {error} <button className="underline" onClick={reload}>Retry</button>
-              </p>
-            )}
-            <TaskList tasks={tasks} busy={loading} onView={setViewing} onEdit={setFormTarget} onDelete={setDeleting} />
-            {data && <Pagination meta={data.meta} onPage={(page) => updateQuery({ page })} />}
-          </>
-        )}
-      </main>
-
       {formTarget && (
-        <Modal title={formTarget === 'new' ? 'New task' : 'Edit task'} onClose={() => setFormTarget(null)}>
+        <Modal title={formTarget === 'new' ? 'New task' : `Edit task`} onClose={() => setFormTarget(null)}>
           <TaskForm
             task={formTarget === 'new' ? undefined : formTarget}
             onSubmit={handleSubmit}
@@ -123,6 +182,7 @@ export default function Dashboard() {
             setFormTarget(t)
           }}
           onDelete={setDeleting}
+          onPatch={patchTask}
         />
       )}
 

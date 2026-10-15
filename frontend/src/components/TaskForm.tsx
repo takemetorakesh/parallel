@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { ApiError, errorMessage } from '../api/client'
-import { PRIORITIES, PRIORITY_LABEL, STATUSES, STATUS_LABEL } from '../types/task'
 import type { Task, TaskInput, TaskPriority, TaskStatus } from '../types/task'
+import { CalendarIcon } from './icons'
+import { PrioritySelect, StatusSelect } from './TaskProps'
 
 const TITLE_MAX = 120
 const DESCRIPTION_MAX = 2000
@@ -52,8 +53,7 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
     if (key in errors) setErrors((e) => ({ ...e, [key]: undefined }))
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function submit() {
     const found = validate(values)
     setErrors(found)
     setFormError(null)
@@ -84,21 +84,33 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      {formError && (
-        <p role="alert" className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {formError}
-        </p>
-      )}
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    void submit()
+  }
 
-      <div>
-        <label htmlFor="title" className="mb-1 block text-sm font-medium">
-          Title <span className="text-danger" aria-hidden="true">*</span>
-        </label>
+  // Cmd/Ctrl+Enter saves, like Linear.
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault()
+      void submit()
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} onKeyDown={onKeyDown} noValidate>
+      <div className="px-4 pb-4">
+        {formError && (
+          <p role="alert" className="mb-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger">
+            {formError}
+          </p>
+        )}
+
+        <label htmlFor="title" className="sr-only">Title</label>
         <input
           id="title"
-          className={`input ${errors.title ? 'input-error' : ''}`}
+          className="w-full bg-transparent text-lg font-medium outline-none placeholder:text-subtle"
+          placeholder="Task title"
           value={values.title}
           onChange={(e) => set('title', e.target.value)}
           aria-invalid={!!errors.title}
@@ -106,53 +118,41 @@ export function TaskForm({ task, onSubmit, onCancel }: Props) {
           autoFocus
         />
         {errors.title && <p id="title-error" className="mt-1 text-xs text-danger">{errors.title}</p>}
-      </div>
 
-      <div>
-        <label htmlFor="description" className="mb-1 block text-sm font-medium">
-          Description <span className="text-danger" aria-hidden="true">*</span>
-        </label>
+        <label htmlFor="description" className="sr-only">Description</label>
         <textarea
           id="description"
-          rows={4}
-          className={`input resize-y ${errors.description ? 'input-error' : ''}`}
+          rows={5}
+          className="mt-2 w-full resize-none bg-transparent outline-none placeholder:text-subtle"
+          placeholder="Add description…"
           value={values.description}
           onChange={(e) => set('description', e.target.value)}
           aria-invalid={!!errors.description}
           aria-describedby={errors.description ? 'description-error' : undefined}
         />
         {errors.description && <p id="description-error" className="mt-1 text-xs text-danger">{errors.description}</p>}
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="status" className="mb-1 block text-sm font-medium">Status</label>
-          <select id="status" className="input" value={values.status} onChange={(e) => set('status', e.target.value as TaskStatus)}>
-            {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-          </select>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <StatusSelect variant="chip" value={values.status} onChange={(v) => set('status', v)} />
+          <PrioritySelect variant="chip" value={values.priority} onChange={(v) => set('priority', v)} />
+          <label className={`chip ${values.dueDate ? 'text-fg' : ''}`}>
+            <CalendarIcon size={13} />
+            <span className="sr-only">Due date</span>
+            <input
+              id="dueDate"
+              type="date"
+              className="w-[112px] bg-transparent text-xs outline-none"
+              value={values.dueDate}
+              onChange={(e) => set('dueDate', e.target.value)}
+              aria-label="Due date"
+              aria-invalid={!!errors.dueDate}
+            />
+          </label>
         </div>
-        <div>
-          <label htmlFor="priority" className="mb-1 block text-sm font-medium">Priority</label>
-          <select id="priority" className="input" value={values.priority} onChange={(e) => set('priority', e.target.value as TaskPriority)}>
-            {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="dueDate" className="mb-1 block text-sm font-medium">Due date</label>
-        <input
-          id="dueDate"
-          type="date"
-          className={`input ${errors.dueDate ? 'input-error' : ''}`}
-          value={values.dueDate}
-          onChange={(e) => set('dueDate', e.target.value)}
-          aria-invalid={!!errors.dueDate}
-        />
         {errors.dueDate && <p className="mt-1 text-xs text-danger">{errors.dueDate}</p>}
       </div>
 
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex items-center justify-end gap-2 border-t border-line px-4 py-3">
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={submitting}>
           Cancel
         </button>

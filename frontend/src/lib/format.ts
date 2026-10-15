@@ -25,3 +25,16 @@ export function isOverdue(dueDate: string | null, status: string): boolean {
   today.setHours(0, 0, 0, 0)
   return parseDateOnly(dueDate) < today
 }
+
+/** "Oct 17", with the year only when it isn't the current one. */
+export function formatShortDate(value: string, dateOnly = false): string {
+  const d = dateOnly ? parseDateOnly(value) : new Date(value)
+  const opts: Intl.DateTimeFormatOptions =
+    d.getFullYear() === new Date().getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' }
+  return d.toLocaleDateString(undefined, opts)
+}
+
+/** Short display id derived from the uuid, e.g. TSK-A1B2. */
+export function shortId(id: string): string {
+  return `TSK-${id.replace(/-/g, '').slice(0, 4).toUpperCase()}`
+}

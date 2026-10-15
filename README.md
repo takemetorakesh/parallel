@@ -5,14 +5,17 @@ Tasks live in backend memory only (no database); data resets when the server res
 
 | | |
 |---|---|
-| ![Dashboard](docs/dashboard-light.jpg) | ![Task details, dark mode](docs/task-details-dark.jpg) |
+| ![Dashboard, dark](docs/dashboard-dark.jpg) | ![Dashboard, light](docs/dashboard-light.jpg) |
+| ![Task details](docs/task-details-dark.jpg) | ![New task](docs/new-task-dark.jpg) |
 
 ## Features
-- Dashboard with create, edit, view (drawer) and delete (with confirmation)
+- Linear-inspired UI: sidebar, tasks grouped by status, dense rows, dark by default
+- Change status/priority/due date inline (row menus or the details panel); create, edit, delete (with confirmation)
+- Keyboard: `C` new task, `/` search, `Esc` close, `⌘/Ctrl+Enter` save
 - Loading skeleton, empty state (with/without filters), error state with retry, toasts
 - Client-side form validation, plus server errors mapped back onto form fields
 - **Bonus:** debounced search, status/priority filters, sorting (created / priority / due date), pagination, dark mode (follows system, persisted), Swagger docs, Postman collection
-- Responsive: single column on mobile, 2–3 columns on larger screens
+- Responsive: sidebar becomes a slide-over on mobile
 
 ## Requirements
 Python 3.10+ and Node 20+.
@@ -104,7 +107,7 @@ backend/app
 frontend/src
 ├── api/                     fetch wrapper + typed task calls (only place that touches the network)
 ├── hooks/                   useTasks (data + query state), useDebounce, useTheme
-├── components/              TaskCard, TaskForm, TaskDetailsDrawer, Toolbar, Pagination, Modal, …
+├── components/              Sidebar, TaskList/TaskRow, FilterBar, TaskForm, TaskDetailsDrawer, Popover/SelectMenu, Modal, …
 └── pages/Dashboard.tsx      composes everything
 ```
 

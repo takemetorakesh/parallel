@@ -15,7 +15,8 @@ export const getTask = (id: string, signal?: AbortSignal) =>
 export const createTask = (input: TaskInput) =>
   request<Task>('/api/tasks', { method: 'POST', body: JSON.stringify(input) })
 
-export const updateTask = (id: string, input: TaskInput) =>
+/** PUT with only the fields to change; the API leaves omitted fields untouched. */
+export const updateTask = (id: string, input: Partial<TaskInput>) =>
   request<Task>(`/api/tasks/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(input) })
 
 export const deleteTask = (id: string) =>
