@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f1f3f9;
+  --fg: #14172b;
+  --muted: #5b6478;
+  --line: #e1e5ee;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-fg: #ffffff;
+  --danger: #dc2626;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0e1020;
+  --surface: #171a2e;
+  --surface-2: #1f2339;
+  --fg: #eceefa;
+  --muted: #9aa1bd;
+  --line: #2a2f4a;
+  --primary: #818cf8;
+  --primary-hover: #a5b4fc;
+  --primary-fg: #0e1020;
+  --danger: #f87171;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-danger: var(--danger);
+}
+
+body {
+  @apply bg-bg text-fg antialiased;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply bg-primary text-primary-fg hover:bg-primary-hover; }
+  .btn-secondary { @apply border border-line bg-surface-2 text-fg hover:bg-line; }
+  .btn-danger { @apply bg-danger text-white hover:opacity-90; }
+  .btn-ghost { @apply text-muted hover:bg-surface-2 hover:text-fg; }
+  .input {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg placeholder:text-muted focus:outline-2 focus:outline-primary;
+  }
+  .input-error { @apply border-danger; }
+}
